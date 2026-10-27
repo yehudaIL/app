@@ -32,7 +32,7 @@ public class AdaptiveBrightnessService extends Service implements SensorEventLis
         builder.setSmallIcon(android.R.drawable.ic_menu_view).setContentTitle("בהירות דינמית פעילה")
                 .setContentText("התאמת בהירות לפי חיישן האור").setOngoing(true);
         startForeground(7, builder.build());
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        if (Build.VERSION.SDK_INT >= 23 && Settings.System.canWrite(this)) {\n            Settings.System.putInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);\n        }\n        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         lightSensor = sensorManager == null ? null : sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         if (lightSensor != null) sensorManager.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
         else stopSelf();
