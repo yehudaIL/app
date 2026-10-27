@@ -1,7 +1,9 @@
 package il.yehuda.adaptive;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,7 +17,8 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
     private TextView status;
-    private int mint = Color.rgb(105, 235, 195);
+    private final int mint = Color.rgb(105, 235, 195);
+    private static final int CAMERA_REQUEST = 410;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -36,7 +39,7 @@ public class MainActivity extends Activity {
         root.addView(title, new LinearLayout.LayoutParams(-1, -2));
 
         TextView subtitle = new TextView(this);
-        subtitle.setText("המסך יתאים את הבהירות לתאורת הסביבה\nחסכוני במשאבים ופועל ברקע");
+        subtitle.setText("מעריכה את התאורה בעזרת מצלמת הסלפי\nומכוונת את בהירות המסך בהתאם");
         subtitle.setTextColor(Color.LTGRAY);
         subtitle.setTextSize(16);
         subtitle.setGravity(Gravity.CENTER);
@@ -53,8 +56,7 @@ public class MainActivity extends Activity {
         Button permission = button("מתן הרשאת שינוי בהירות");
         permission.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT >= 23 && !Settings.System.canWrite(this)) {
-                Intent i = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
-                        Uri.parse("package:" + getPackageName()));
+                Intent i = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()));
                 startActivity(i);
             } else status.setText("הרשאת שינוי בהירות כבר פעילה");
         });
@@ -66,9 +68,11 @@ public class MainActivity extends Activity {
                 status.setText("תחילה יש לאשר הרשאת שינוי בהירות");
                 return;
             }
-            Intent i = new Intent(this, BrightnessService.class);
-            if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i);
-            status.setText("הבהירות החכמה הופעלה");
+            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
+                return;
+            }
+            startCameraService();
         });
         root.addView(start, buttonParams());
 
@@ -79,7 +83,21 @@ public class MainActivity extends Activity {
         });
         root.addView(stop, buttonParams());
         setContentView(root);
-        status.setText("יש לאשר הרשאה ואז להפעיל");
+        status.setText("אשר הרשאת בהירות והרשאת מצלמה, ואז הפעל");
+    }
+
+    private void startCameraService() {
+        Intent i = new Intent(this, BrightnessService.class);
+        if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i);
+        status.setText("פעילה — מצלמת הסלפי מעריכה את התאורה");
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_REQUEST) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) startCameraService();
+            else status.setText("נדרשת הרשאת מצלמה כדי להעריך את התאורה");
+        }
     }
 
     private Button button(String text) {
