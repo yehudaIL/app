@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">הכפתור שלי</string>
+    <string name="accessibility_service_description">ניסיון לזהות לחיצה על מקש המצלמה ולהפעיל את האפליקציה שנבחרה.</string>
+</resources>
