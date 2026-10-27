@@ -43,6 +43,7 @@ public class MainActivity extends Activity {
         TextView section=text("הפעלה והגדרות",19,white,true); section.setGravity(Gravity.RIGHT); add(content,section,0,10);
         TextView explain=text("כדי לנסות לזהות לחיצת מצלמה, צריך להפעיל את שירות הנגישות של האפליקציה. אנדרואיד או יצרן הטלפון עדיין עשויים למנוע יירוט של הכפתור הייעודי.",14,Color.rgb(203,211,229),false); explain.setGravity(Gravity.RIGHT); explain.setLineSpacing(dp(4),1f); add(content,explain,0,12);
         Button accessibility=button("פתח הגדרות נגישות"); add(content,accessibility,0,10); accessibility.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+        Button brightness=button("בהירות דינמית לפי מצלמת הסלפי"); add(content,brightness,0,10); brightness.setOnClickListener(v -> startActivity(new Intent(this,BrightnessActivity.class)));
         status=text("",14,mint,true); status.setGravity(Gravity.CENTER); add(content,status,10,8);
         TextView note=text("הערה: האפליקציה אינה משנה הגדרות מערכת מוסתרות ואינה מבטיחה פעולה בכל דגם. אם הכפתור מופעל ישירות על ידי הקושחה, ייתכן שיהיה צורך בהגדרת קיצור דרך של יצרן הטלפון.",13,Color.LTGRAY,false); note.setGravity(Gravity.RIGHT); note.setLineSpacing(dp(3),1f); add(content,note,18,10);
         scroll.addView(content); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1)); setContentView(root); updateStatus();
