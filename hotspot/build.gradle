@@ -1,0 +1,13 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'il.yehuda.hotspot'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'il.yehuda.hotspot'
+        minSdk 24
+        targetSdk 33
+        versionCode 1
+        versionName '1.0'
+    }
+}
