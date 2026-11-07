@@ -1,12 +1,9 @@
 package il.yehuda.hotspot;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.os.Bundle;
-import android.service.quicksettings.TileService;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -75,30 +72,7 @@ public class MainActivity extends Activity {
     }
 
     private void addTile() {
-        if (Build.VERSION.SDK_INT >= 33) {
-            TileService.requestAddTileService(
-                this,
-                new ComponentName(this, HotspotTileService.class),
-                getString(R.string.tile_label),
-                android.graphics.drawable.Icon.createWithResource(this, R.drawable.ic_hotspot),
-                getMainExecutor(),
-                result -> {
-                    String message;
-                    switch (result) {
-                        case TileService.TILE_ADD_REQUEST_RESULT_TILE_ADDED:
-                            message = "הכפתור נוסף לחלונית!";
-                            break;
-                        case TileService.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED:
-                            message = "הכפתור כבר נמצא בחלונית";
-                            break;
-                        default:
-                            message = "לא נוסף. אפשר להוסיף ידנית דרך עריכת החלונית";
-                    }
-                    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-                }
-            );
-        } else {
-            Toast.makeText(this, "פתח את עריכת חלונית ההגדרות וחפש: נקודה חמה מהירה", Toast.LENGTH_LONG).show();
-        }
-    }
-}
+        Toast.makeText(this,
+            "פתח את חלונית ההתראות, לחץ על עריכה או על סמל העיפרון, מצא את ״נקודה חמה״ וגרור אותה לחלונית הפעילה.",
+            Toast.LENGTH_LONG).show();
+    }}
