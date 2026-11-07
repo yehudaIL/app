@@ -35,7 +35,7 @@ public class MainActivity extends Activity {
   }};
   private final ScanCallback scanCallback=new ScanCallback(){
     @Override public void onScanResult(int t,android.bluetooth.le.ScanResult r){addBle(r);}
-    @Override public void onBatchScanResults(List<android.bluetooth.le.ScanResult> rs){for(android.net.wifi.ScanResult r:rs)addBle(r);}
+    @Override public void onBatchScanResults(List<android.bluetooth.le.ScanResult> rs){for(android.bluetooth.le.ScanResult r:rs)addBle(r);}
     @Override public void onScanFailed(int c){scanningBle=false;if(bleStatus!=null)bleStatus.setText("הסריקה נכשלה (קוד "+c+")");}
   };
   private void addBle(android.bluetooth.le.ScanResult r){BluetoothDevice d=r.getDevice();String n=d.getName();if(n==null||n.trim().isEmpty())n="התקן Bluetooth ללא שם";String a=d.getAddress();bleRows.put(a,n+"\n"+a+" • "+r.getRssi()+" dBm • "+signal(r.getRssi()));renderBle();}
