@@ -1,13 +1,12 @@
 plugins { id 'com.android.application' }
-
 android {
     namespace 'il.yv.ltd'
     compileSdk 35
     defaultConfig {
         applicationId 'il.yv.ltd'
         minSdk 26
-        targetSdk 35
-        versionCode 1
-        versionName '1.0'
+        targetSdk 32
+        versionCode 2
+        versionName '1.1'
     }
 }
