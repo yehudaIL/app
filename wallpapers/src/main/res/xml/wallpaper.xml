@@ -1,1 +1,1 @@
-<wallpaper xmlns:android="http://schemas.android.com/apk/res/android" android:description="@string/app_name" android:thumbnail="@drawable/wallpaper_thumb" android:settingsActivity="" />
+<wallpaper xmlns:android="http://schemas.android.com/apk/res/android" android:description="@string/app_name" android:thumbnail="@drawable/wallpaper_thumb" />
