@@ -1,50 +1,70 @@
 package il.yv.ltd;
 
+import android.Manifest;
 import android.app.Activity;
 import android.os.Bundle;
-import android.content.Context;
-import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
+import android.content.*;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.hardware.Sensor;
-import android.hardware.SensorManager;
+import android.net.wifi.*;
+import android.bluetooth.*;
+import android.bluetooth.le.*;
+import android.location.LocationManager;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class MainActivity extends Activity {
-    private final int bg=Color.rgb(8,13,24), panel=Color.rgb(17,27,43), cyan=Color.rgb(54,211,235), muted=Color.rgb(151,169,190);
-    private LinearLayout root, content;
-    private SensorManager sensors;
-    private SharedPreferences prefs;
-    private String page="home";
-    private TextView status;
-    @Override public void onCreate(Bundle b){super.onCreate(b); getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);sensors=(SensorManager)getSystemService(SENSOR_SERVICE);prefs=getSharedPreferences("yv",0);show("home");}
-    private GradientDrawable shape(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(radius);d.setStroke(1,Color.rgb(35,58,78));return d;}
-    private TextView text(String s,int size,int color,boolean bold){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setGravity(Gravity.RIGHT);t.setTypeface(Typeface.create("sans-serif",bold?Typeface.BOLD:Typeface.NORMAL));return t;}
-    private void addText(LinearLayout box,String s,int size,int color,boolean bold,int bottom){TextView t=text(s,size,color,bold);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=bottom;box.addView(t,p);}
-    private LinearLayout card(){LinearLayout c=new LinearLayout(this);c.setOrientation(1);c.setPadding(18,16,18,16);c.setBackground(shape(panel,24));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.bottomMargin=12;content.addView(c,p);return c;}
-    private void button(LinearLayout box,String label,Runnable action){Button b=new Button(this);b.setText(label);b.setTextColor(Color.WHITE);b.setAllCaps(false);b.setTextSize(14);b.setBackground(shape(Color.rgb(23,48,68),18));b.setOnClickListener(v->action.run());LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.topMargin=8;box.addView(b,p);}
-    private void show(String target){page=target;root=new LinearLayout(this);root.setOrientation(1);root.setPadding(18,16,18,10);root.setBackgroundColor(bg);setContentView(root);
-        LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);top.setOrientation(1);addText(top,"Y.V  L.T.D.",23,cyan,true,2);addText(top,"מרכז גילוי חכם  •  גרסה ראשונה",12,muted,false,16);root.addView(top);
-        ScrollView scroll=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(1);scroll.addView(content);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        if(target.equals("home"))home(); else if(target.equals("sensors"))sensorPage();else if(target.equals("history"))history();else if(target.equals("radar"))radar();else settings();
-        LinearLayout nav=new LinearLayout(this);nav.setGravity(Gravity.CENTER);String[][] items={{"ראשי","home"},{"חיישנים","sensors"},{"מכ״ם","radar"},{"היסטוריה","history"},{"הגדרות","settings"}};for(String[] it:items){TextView n=text(it[0],11,it[1].equals(page)?cyan:muted,true);n.setGravity(Gravity.CENTER);n.setPadding(4,14,4,12);n.setOnClickListener(v->show(it[1]));nav.addView(n,new LinearLayout.LayoutParams(0,-2,1));}root.addView(nav);
-    }
-    private void home(){LinearLayout hero=card();addText(hero,"שלום, ברוך הבא",20,Color.WHITE,true,5);addText(hero,"הטלפון שלך. התמונה המלאה.",14,muted,false,14);addText(hero,"NEXUS INTELLIGENCE",11,cyan,true,3);addText(hero,"מרכז הבקרה האישי שלך מוכן לסריקה.",13,Color.WHITE,false,8);button(hero,"התחל בדיקת חיישנים  ←",()->show("sensors"));
-        LinearLayout a=card();addText(a,"מה אפשר לגלות?",17,Color.WHITE,true,10);feature(a,"◉  חיישני המכשיר","בדיקת החיישנים שקיימים בפועל בטלפון");feature(a,"⌁  רשתות בסביבה","מידע Wi-Fi ו-Bluetooth בהתאם להרשאות Android");feature(a,"◷  ציר הזמן","שמירת בדיקות והשוואה בין מדידות");feature(a,"✦  תובנות","הסברים פשוטים על השינויים שנמדדו");
-        LinearLayout b=card();addText(b,"התחלה פשוטה",16,Color.WHITE,true,6);addText(b,"לא צריך להיות מומחה. בחר אזור, לחץ על בדיקה וקבל הסבר ברור. כל הנתונים נשארים במכשיר.",13,muted,false,4);
-    }
-    private void feature(LinearLayout c,String title,String desc){addText(c,title,14,cyan,true,2);addText(c,desc,12,muted,false,10);}
-    private void sensorPage(){LinearLayout intro=card();addText(intro,"בדיקת חיישנים",20,Color.WHITE,true,5);addText(intro,"נציג רק חיישנים שקיימים במכשיר שלך. לחץ על רענון כדי לבדוק שוב.",13,muted,false,5);button(intro,"רענן רשימת חיישנים",()->show("sensors"));
-        List<Sensor> list=sensors.getSensorList(Sensor.TYPE_ALL);for(Sensor s:list){LinearLayout c=card();addText(c,s.getName(),15,Color.WHITE,true,4);addText(c,s.getVendor()+"  •  "+s.getStringType(),11,muted,false,3);addText(c,"צריכת חשמל משוערת: "+s.getPower()+" mA",12,cyan,false,0);}
-        if(list.isEmpty()){LinearLayout c=card();addText(c,"לא נמצאו חיישנים זמינים.",14,muted,false,0);}
-        button(content,"שמור בדיקה בהיסטוריה",()->{String now=new SimpleDateFormat("dd/MM/yyyy HH:mm",Locale.getDefault()).format(new Date());prefs.edit().putString("last",now).putInt("count",prefs.getInt("count",0)+1).apply();Toast.makeText(this,"הבדיקה נשמרה במכשיר",Toast.LENGTH_SHORT).show();});
-    }
-    private void radar(){LinearLayout c=card();addText(c,"מכ״ם סביבתי",20,Color.WHITE,true,6);addText(c,"סריקות רשת דורשות הרשאות מערכת, הפעלת שירותי מיקום ותמיכה של היצרן. בגרסה זו מוצג הסבר לפני הפעלת סריקות.",13,muted,false,10);button(c,"מידע על סריקת Wi-Fi",()->new android.app.AlertDialog.Builder(this).setTitle("סריקת Wi-Fi").setMessage("Android עשוי לדרוש הרשאת מיקום ושירותי מיקום פעילים. תוצאות הסריקה מוגבלות על ידי המכשיר ומדיניות המערכת.").setPositiveButton("הבנתי",null).show());button(c,"מידע על Bluetooth",()->new android.app.AlertDialog.Builder(this).setTitle("סריקת Bluetooth").setMessage("ניתן לגלות רק התקני Bluetooth שמשדרים וניתנים לגילוי. לא כל טלפון או התקן יופיעו בסריקה.").setPositiveButton("הבנתי",null).show());}
-    private void history(){LinearLayout c=card();addText(c,"היסטוריית בדיקות",20,Color.WHITE,true,8);addText(c,"מספר בדיקות שנשמרו: "+prefs.getInt("count",0),14,cyan,true,6);String last=prefs.getString("last","עדיין לא בוצעה בדיקה");addText(c,"בדיקה אחרונה: "+last,13,muted,false,12);button(c,"מחק היסטוריה",()->new android.app.AlertDialog.Builder(this).setTitle("מחיקת היסטוריה").setMessage("למחוק את כל נתוני ההיסטוריה המקומיים?").setNegativeButton("ביטול",null).setPositiveButton("מחק",(d,w)->{prefs.edit().clear().apply();show("history");}).show());}
-    private void settings(){LinearLayout c=card();addText(c,"הגדרות ופרטיות",20,Color.WHITE,true,8);feature(c,"פרטיות תחילה","בגרסה זו המידע נשמר מקומית במכשיר.");feature(c,"ללא Root","אין צורך בהרשאות Root.");feature(c,"עובד גם ללא אינטרנט","מסכי המידע, החיישנים וההיסטוריה זמינים אופליין.");feature(c,"שקיפות","האפליקציה לא מזהה בעלי מכשירים ולא מבטיחה לאתר כל משדר.");}
+  private final int bg=0xFF08111F, panel=0xFF132238, cyan=0xFF43D9E8, muted=0xFF9CB0C8, white=Color.WHITE;
+  private LinearLayout root, content;
+  private WifiManager wifi; private BluetoothAdapter bt; private BluetoothLeScanner ble;
+  private final Handler handler=new Handler(Looper.getMainLooper());
+  private final Map<String,String> wifiRows=new LinkedHashMap<>(), bleRows=new LinkedHashMap<>();
+  private TextView wifiStatus, bleStatus; private boolean receiverRegistered=false, scanningBle=false;
+  private final int REQ=77;
+  private final BroadcastReceiver wifiReceiver=new BroadcastReceiver(){public void onReceive(Context c,Intent i){
+    boolean updated=i.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED,false); List<ScanResult> rs=wifi.getScanResults();wifiRows.clear();
+    for(ScanResult r:rs){String n=(r.SSID==null||r.SSID.isEmpty())?"רשת ללא שם":r.SSID;wifiRows.put(r.BSSID,n+"\n"+r.BSSID+" • "+r.frequency+" MHz • "+r.level+" dBm • "+signal(r.level));}
+    renderWifi();if(wifiStatus!=null)wifiStatus.setText((updated?"הסריקה עודכנה":"תוצאות אחרונות")+" • "+rs.size()+" רשתות");
+  }};
+  private final ScanCallback scanCallback=new ScanCallback(){
+    @Override public void onScanResult(int t,ScanResult r){addBle(r);}
+    @Override public void onBatchScanResults(List<ScanResult> rs){for(ScanResult r:rs)addBle(r);}
+    @Override public void onScanFailed(int c){scanningBle=false;if(bleStatus!=null)bleStatus.setText("הסריקה נכשלה (קוד "+c+")");}
+  };
+  private void addBle(ScanResult r){BluetoothDevice d=r.getDevice();String n=d.getName();if(n==null||n.trim().isEmpty())n="התקן Bluetooth ללא שם";String a=d.getAddress();bleRows.put(a,n+"\n"+a+" • "+r.getRssi()+" dBm • "+signal(r.getRssi()));renderBle();}
+  private String signal(int r){if(r>=-55)return "אות חזק";if(r>=-70)return "אות בינוני";if(r>=-85)return "אות חלש";return "אות חלש מאוד";}
+  @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(bg);getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);wifi=(WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);BluetoothManager bm=(BluetoothManager)getSystemService(BLUETOOTH_SERVICE);if(bm!=null)bt=bm.getAdapter();show("home");}
+  private GradientDrawable shape(int c,int r){GradientDrawable d=new GradientDrawable();d.setColor(c);d.setCornerRadius(r);d.setStroke(1,0xFF29415B);return d;}
+  private TextView txt(String s,int z,int c,boolean b){TextView t=new TextView(this);t.setText(s);t.setTextSize(z);t.setTextColor(c);t.setGravity(Gravity.RIGHT);t.setTypeface(Typeface.create("sans-serif",b?1:0));return t;}
+  private void line(LinearLayout p,String s,int z,int c,boolean b,int m){TextView t=txt(s,z,c,b);LinearLayout.LayoutParams q=new LinearLayout.LayoutParams(-1,-2);q.bottomMargin=m;p.addView(t,q);}
+  private LinearLayout card(){LinearLayout c=new LinearLayout(this);c.setOrientation(1);c.setPadding(17,15,17,15);c.setBackground(shape(panel,22));LinearLayout.LayoutParams q=new LinearLayout.LayoutParams(-1,-2);q.bottomMargin=12;content.addView(c,q);return c;}
+  private void btn(LinearLayout p,String s,Runnable a){Button b=new Button(this);b.setText(s);b.setTextColor(white);b.setAllCaps(false);b.setTextSize(14);b.setBackground(shape(0xFF17415A,18));b.setOnClickListener(v->a.run());LinearLayout.LayoutParams q=new LinearLayout.LayoutParams(-1,-2);q.topMargin=8;p.addView(b,q);}
+  private void show(String page){root=new LinearLayout(this);root.setOrientation(1);root.setPadding(16,14,16,8);root.setBackgroundColor(bg);setContentView(root);line(root,"Y.V  L.T.D.",24,cyan,true,1);line(root,"מאתר התקנים ורשתות בסביבה",12,muted,false,12);
+    ScrollView sc=new ScrollView(this);content=new LinearLayout(this);content.setOrientation(1);sc.addView(content);root.addView(sc,new LinearLayout.LayoutParams(-1,0,1));
+    if(page.equals("home"))home();else if(page.equals("wifi"))wifiPage();else if(page.equals("ble"))blePage();else if(page.equals("sensors"))sensorPage();else settings();
+    LinearLayout nav=new LinearLayout(this);nav.setGravity(Gravity.CENTER);String[][] ns={{"ראשי","home"},{"Wi‑Fi","wifi"},{"Bluetooth","ble"},{"חיישנים","sensors"},{"פרטיות","settings"}};for(String[] n:ns){TextView t=txt(n[0],11,white,true);t.setGravity(Gravity.CENTER);t.setPadding(3,13,3,12);t.setOnClickListener(v->show(n[1]));nav.addView(t,new LinearLayout.LayoutParams(0,-2,1));}root.addView(nav);
+  }
+  private void home(){LinearLayout h=card();line(h,"גילוי סביבתי",21,white,true,5);line(h,"סרוק רשתות Wi‑Fi והתקני Bluetooth שמשדרים בקרבתך.",14,muted,false,12);btn(h,"התחל סריקת Wi‑Fi",()->show("wifi"));btn(h,"התחל סריקת Bluetooth",()->show("ble"));LinearLayout i=card();line(i,"מה תראה בתוצאות?",17,white,true,8);line(i,"• שם רשת או התקן, אם משודר\n• כתובת מזהה\n• עוצמת אות ב־dBm\n• דירוג אות משוער",13,muted,false,8);LinearLayout w=card();line(w,"חשוב לדעת",16,cyan,true,5);line(w,"לא כל טלפון משדר Bluetooth שניתן לגילוי. סריקת Wi‑Fi מציגה נקודות גישה, לא כל מכשיר שמחובר אליהן. אין זיהוי בעלים או מרחק מדויק.",12,muted,false,0);}
+  private boolean hasLoc(){return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED;}
+  private void ask(){if(!hasLoc())requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},REQ);}
+  private boolean locOn(){LocationManager l=(LocationManager)getSystemService(LOCATION_SERVICE);try{return l.isProviderEnabled(LocationManager.GPS_PROVIDER)||l.isProviderEnabled(LocationManager.NETWORK_PROVIDER);}catch(Exception e){return false;}}
+  private void wifiPage(){LinearLayout c=card();line(c,"סריקת רשתות Wi‑Fi",20,white,true,6);wifiStatus=txt("לחץ כדי לסרוק רשתות בסביבה",12,muted,false);c.addView(wifiStatus);btn(c,"סרוק עכשיו",()->startWifi());LinearLayout l=card();line(l,"רשתות שנמצאו",16,cyan,true,8);TextView h=txt("",13,white,false);h.setTag("wifi_holder");l.addView(h);renderWifi();}
+  private void startWifi(){if(!hasLoc()){ask();return;}if(!locOn()){new android.app.AlertDialog.Builder(this).setTitle("נדרש שירות מיקום").setMessage("הפעל שירותי מיקום כדי לאפשר סריקת Wi‑Fi.").setPositiveButton("הגדרות",(d,w)->startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))).setNegativeButton("ביטול",null).show();return;}try{if(!receiverRegistered){registerReceiver(wifiReceiver,new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));receiverRegistered=true;}boolean ok=wifi.startScan();wifiStatus.setText(ok?"סורק רשתות…":"המערכת הגבילה סריקות; מציג תוצאות אחרונות");if(!ok){wifiRows.clear();for(ScanResult r:wifi.getScanResults())wifiRows.put(r.BSSID,(r.SSID.isEmpty()?"רשת ללא שם":r.SSID)+"\n"+r.BSSID+" • "+r.level+" dBm • "+signal(r.level));renderWifi();}}catch(Exception e){wifiStatus.setText("לא ניתן לסרוק: "+e.getMessage());}}
+  private void renderWifi(){render("wifi_holder",wifiRows);}
+  private void blePage(){LinearLayout c=card();line(c,"סריקת Bluetooth LE",20,white,true,6);bleStatus=txt("הסריקה תימשך 12 שניות",12,muted,false);c.addView(bleStatus);btn(c,"התחל סריקה",()->startBle());btn(c,"עצור סריקה",()->stopBle());LinearLayout l=card();line(l,"התקנים שהתגלו",16,cyan,true,8);TextView h=txt("",13,white,false);h.setTag("ble_holder");l.addView(h);renderBle();}
+  private void startBle(){if(!hasLoc()){ask();return;}if(bt==null||!bt.isEnabled()){new android.app.AlertDialog.Builder(this).setTitle("Bluetooth כבוי").setMessage("הפעל Bluetooth כדי לסרוק התקנים.").setPositiveButton("הגדרות",(d,w)->startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS))).setNegativeButton("ביטול",null).show();return;}try{ble=bt.getBluetoothLeScanner();if(ble==null){bleStatus.setText("סריקת Bluetooth LE אינה זמינה");return;}bleRows.clear();ble.startScan(scanCallback);scanningBle=true;bleStatus.setText("סורק…");handler.postDelayed(()->{stopBle();if(bleStatus!=null)bleStatus.setText("הסריקה הסתיימה • "+bleRows.size()+" התקנים");},12000);}catch(Exception e){bleStatus.setText("שגיאה בהפעלת הסריקה: "+e.getMessage());}}
+  private void stopBle(){try{if(ble!=null&&scanningBle)ble.stopScan(scanCallback);}catch(Exception ignored){}scanningBle=false;}
+  private void renderBle(){render("ble_holder",bleRows);}
+  private void render(String tag,Map<String,String> rows){if(content==null)return;for(int i=0;i<content.getChildCount();i++){View v=content.getChildAt(i);if(v instanceof LinearLayout){LinearLayout l=(LinearLayout)v;for(int j=0;j<l.getChildCount();j++){View x=l.getChildAt(j);if(x instanceof TextView&&tag.equals(x.getTag())){StringBuilder s=new StringBuilder();for(String r:rows.values())s.append("• ").append(r).append("\n\n");((TextView)x).setText(s.length()==0?"אין עדיין תוצאות. אשר הרשאה ולחץ סרוק.":s.toString());}}}}}
+  private void sensorPage(){LinearLayout c=card();line(c,"חיישני המכשיר",19,white,true,8);android.hardware.SensorManager sm=(android.hardware.SensorManager)getSystemService(SENSOR_SERVICE);for(android.hardware.Sensor s:sm.getSensorList(android.hardware.Sensor.TYPE_ALL))line(c,s.getName()+"\n"+s.getVendor()+" • "+s.getStringType(),12,muted,false,10);}
+  private void settings(){LinearLayout c=card();line(c,"פרטיות ומגבלות",19,white,true,8);line(c,"• סריקות רק בלחיצה שלך.\n• אין מעקב ברקע.\n• אין זיהוי בעלי מכשירים.\n• עוצמת אות אינה מרחק מדויק.\n• התוצאות תלויות בחומרה ובהגבלות Android.",13,muted,false,0);}
+  @Override public void onRequestPermissionsResult(int r,String[] p,int[] g){super.onRequestPermissionsResult(r,p,g);if(r==REQ&&g.length>0&&g[0]==PackageManager.PERMISSION_GRANTED)Toast.makeText(this,"ההרשאה אושרה. לחץ שוב על סריקה.",Toast.LENGTH_LONG).show();}
+  @Override protected void onDestroy(){stopBle();if(receiverRegistered)try{unregisterReceiver(wifiReceiver);}catch(Exception ignored){}super.onDestroy();}
 }
