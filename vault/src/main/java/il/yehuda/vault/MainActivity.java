@@ -46,13 +46,11 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(navy);
         getWindow().setNavigationBarColor(navy);
         getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        pinHash=getPreferences(0).getString("pin_hash",null);
-        Shizuku.addRequestPermissionResultListener(permissionListener);
+        pinHash=getSharedPreferences(PREF,MODE_PRIVATE).getString("pin_hash",null);
         renderGate();
     }
 
     @Override protected void onDestroy(){
-        Shizuku.removeRequestPermissionResultListener(permissionListener);
         super.onDestroy();
     }
 
@@ -75,7 +73,7 @@ public class MainActivity extends Activity {
         go.setOnClickListener(v->{
             String p=pinInput.getText().toString();
             if(p.length()<4){pinInput.setError("הקוד חייב להכיל לפחות 4 ספרות");return;}
-            if(pinHash==null){pinHash=hash(p);getPreferences(0).edit().putString("pin_hash",pinHash).apply();unlocked=true;renderHome();}
+            if(pinHash==null){pinHash=hash(p);getSharedPreferences(PREF,MODE_PRIVATE).edit().putString("pin_hash",pinHash).apply();unlocked=true;renderHome();}
             else if(hash(p).equals(pinHash)){unlocked=true;renderHome();}
             else pinInput.setError("קוד שגוי");
         });
@@ -88,41 +86,12 @@ public class MainActivity extends Activity {
     }
 
     private Set<String> hidden(){
-        Set<String> saved=getPreferences(0).getStringSet(HIDDEN,new HashSet<>());
+        Set<String> saved=getSharedPreferences(PREF,MODE_PRIVATE).getStringSet(HIDDEN,new HashSet<>());
         return new HashSet<>(saved);
     }
-    private void saveHidden(Set<String> s){getPreferences(0).edit().putStringSet(HIDDEN,new HashSet<>(s)).apply();}
+    private void saveHidden(Set<String> s){getSharedPreferences(PREF,MODE_PRIVATE).edit().putStringSet(HIDDEN,new HashSet<>(s)).apply();}
     private String key(String pkg,String cls){return pkg+"|"+cls;}
     private String[] splitKey(String value){int p=value.indexOf('|');return p<1?new String[]{value,""}:new String[]{value.substring(0,p),value.substring(p+1)};}
-
-    private boolean hasShizuku(){
-        try{return Shizuku.pingBinder();}
-        catch(Throwable e){return false;}
-    }
-    private boolean hasShizukuPermission(){
-        try{return hasShizuku() && Shizuku.checkSelfPermission()==PackageManager.PERMISSION_GRANTED;}
-        catch(Throwable e){return false;}
-    }
-    private void requestShizuku(){
-        if(!hasShizuku()){
-            new AlertDialog.Builder(this).setTitle("צריך להפעיל Shizuku")
-                .setMessage("התקן את Shizuku, הפעל אותו דרך ניפוי באגים אלחוטי, ואז חזור לכאן. ההפעלה נדרשת שוב לאחר הפעלה מחדש של המכשיר.")
-                .setPositiveButton("פתיחת דף Shizuku",(d,w)->startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/"))))
-                .setNegativeButton("ביטול",null).show();
-            return;
-        }
-        try{
-            if(Shizuku.isPreV11()){
-                Toast.makeText(this,"נדרשת גרסת Shizuku עדכנית",Toast.LENGTH_LONG).show();return;
-            }
-            if(hasShizukuPermission()){
-                Toast.makeText(this,"Shizuku כבר מחובר ומאושר",Toast.LENGTH_SHORT).show();return;
-            }
-            Shizuku.requestPermission(SHIZUKU_REQUEST);
-        }catch(Throwable e){
-            new AlertDialog.Builder(this).setMessage("לא ניתן לבקש הרשאת Shizuku: "+e.getMessage()).setPositiveButton("סגירה",null).show();
-        }
-    }
 
     private void renderHome(){
         base();
@@ -137,10 +106,10 @@ public class MainActivity extends Activity {
         visible.setOnClickListener(v->{showHidden=false;renderHome();});
         hiddenBtn.setOnClickListener(v->{showHidden=true;renderHome();});
         root.addView(space(20));
-        TextView status=text("Shizuku: "+(hasShizukuPermission()?"מחובר ומאושר":(hasShizuku()?"ממתין לאישור":"לא פעיל")),13,hasShizukuPermission()?gold:Color.YELLOW,true);root.addView(status);
-        status.setOnClickListener(v->requestShizuku());
-        TextView setup=button(hasShizukuPermission()?"בדיקת חיבור Shizuku":"התחברות / אישור Shizuku");
-        LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,54);sp.setMargins(0,12,0,10);root.addView(setup,sp);setup.setOnClickListener(v->requestShizuku());
+        TextView status=text("מצב הסתרה: משגר פרטי",13,gold,true);root.addView(status);
+        TextView setup=button("הגדרת Stealth Vault כמסך הבית");
+        LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,54);sp.setMargins(0,12,0,10);root.addView(setup,sp);
+        setup.setOnClickListener(v->{try{startActivity(new Intent(android.provider.Settings.ACTION_HOME_SETTINGS));}catch(Exception e){startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));}});
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(false);scroll.setClipToPadding(false);list=column();list.setPadding(0,14,0,14);scroll.addView(list);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         loadApps();
         TextView settings=text("הגדרות אבטחה  ·  שינוי קוד  ·  נעילה",13,muted,true);settings.setGravity(Gravity.CENTER);settings.setPadding(12,22,12,18);root.addView(settings);settings.setOnClickListener(v->securityDialog());
@@ -201,61 +170,30 @@ public class MainActivity extends Activity {
     }
 
     private void hidePackage(String pkg,List<String> classes){
-        if(!hasShizukuPermission()){requestShizuku();return;}
-        new AlertDialog.Builder(this).setTitle("להסתיר את "+pkg+"?")
-            .setMessage("קיצורי הדרך של האפליקציה יוסתרו ממסך הבית וממגירת האפליקציות. האפליקציה עצמה לא תוסר, והנתונים שלה לא יימחקו.")
-            .setPositiveButton("הסתר",(d,w)->runComponentCommand(pkg,classes,false))
-            .setNegativeButton("ביטול",null).show();
+        new AlertDialog.Builder(this).setTitle("להסתיר את האפליקציה?")
+            .setMessage("האפליקציה תישאר מותקנת ופעילה. הסמל שלה יוסתר רק במשגר Stealth Vault. כדי שההסתרה תעבוד, יש להגדיר את Stealth Vault כמסך הבית.")
+            .setPositiveButton("הסתר",(d,w)->{
+                Set<String> saved=hidden();
+                for(String cls:classes)saved.add(key(pkg,cls));
+                saveHidden(saved);
+                Toast.makeText(this,"האפליקציה הוסתרה מהמשגר הפרטי",Toast.LENGTH_LONG).show();
+                renderHome();
+            }).setNegativeButton("ביטול",null).show();
     }
 
     private void restorePackage(String pkg,List<String> classes){
-        if(!hasShizukuPermission()){requestShizuku();return;}
-        runComponentCommand(pkg,classes,true);
-    }
-
-    private String quote(String s){return "'"+s.replace("'","'\\''")+"'";}
-
-    private void runComponentCommand(String pkg,List<String> classes,boolean enable){
-        new Thread(()->{
-            StringBuilder command=new StringBuilder();
-            for(String cls:classes){
-                String component=quote(pkg+"/"+cls);
-                command.append(enable?"pm enable --user 0 ":"pm disable-user --user 0 ")
-                    .append(component).append(" 2>&1 || exit 1").append((char)10);
-            }
-            command.append("echo STEALTH_VAULT_DONE").append((char)10);
-            String output="";
-            try{
-                Method method=Shizuku.class.getDeclaredMethod("newProcess",String[].class,String[].class,String.class);
-                method.setAccessible(true);
-                Process process=(Process)method.invoke(null,new String[]{"sh"},null,null);
-                OutputStream os=process.getOutputStream();os.write(command.toString().getBytes("UTF-8"));os.flush();os.close();
-                ByteArrayOutputStream buffer=new ByteArrayOutputStream();InputStream in=process.getInputStream();byte[] data=new byte[1024];int n;
-                while((n=in.read(data))!=-1)buffer.write(data,0,n);
-                int exit=process.waitFor();output=buffer.toString("UTF-8")+" exit="+exit;
-            }catch(Throwable e){output="ERROR: "+e.getClass().getSimpleName()+": "+e.getMessage();}
-            final String result=output;
-            runOnUiThread(()->{
-                boolean ok=result.contains("STEALTH_VAULT_DONE")&&!result.startsWith("ERROR");
-                if(ok){
-                    Set<String> saved=hidden();
-                    for(String cls:classes){String k=key(pkg,cls);if(enable)saved.remove(k);else saved.add(k);}
-                    saveHidden(saved);
-                    Toast.makeText(this,enable?"האפליקציה הוחזרה":"האפליקציה הוסתרה",Toast.LENGTH_LONG).show();
-                    renderHome();
+        new AlertDialog.Builder(this).setTitle("האפליקציה מוסתרת")
+            .setItems(new String[]{"פתח את האפליקציה","החזר אותה למגירה"},(d,w)->{
+                if(w==0){
+                    try{Intent launch=getPackageManager().getLaunchIntentForPackage(pkg);if(launch!=null)startActivity(launch);}
+                    catch(Exception e){Toast.makeText(this,"לא ניתן לפתוח את האפליקציה",Toast.LENGTH_SHORT).show();}
                 }else{
-                    String shown=result.length()>1800?result.substring(0,1800)+"\\n... (השגיאה המלאה תועתק בלחיצה על הכפתור) ...":result;
-                    new AlertDialog.Builder(this).setTitle("הפעולה לא הושלמה")
-                        .setMessage("Shizuku לא הצליח לשנות את קיצורי האפליקציה.\\n\\n"+shown)
-                        .setNeutralButton("העתק פרטי שגיאה",(dialog,which)->{
-                            ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                            clipboard.setPrimaryClip(ClipData.newPlainText("Stealth Vault error",result));
-                            Toast.makeText(this,"פרטי השגיאה הועתקו. עכשיו אפשר להדביק אותם בצ'אט.",Toast.LENGTH_LONG).show();
-                        })
-                        .setPositiveButton("סגירה",null).show();
+                    Set<String> saved=hidden();
+                    for(String cls:classes)saved.remove(key(pkg,cls));
+                    saveHidden(saved);
+                    renderHome();
                 }
-            });
-        }).start();
+            }).setNegativeButton("ביטול",null).show();
     }
 
     private void securityDialog(){
@@ -264,7 +202,7 @@ public class MainActivity extends Activity {
             if(w==0){
                 EditText e=new EditText(this);e.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_VARIATION_PASSWORD);e.setHint("קוד חדש (4 ספרות ומעלה)");
                 new AlertDialog.Builder(this).setTitle("שינוי קוד").setView(e).setPositiveButton("שמירה",(x,y)->{
-                    String p=e.getText().toString();if(p.length()>=4){pinHash=hash(p);getPreferences(0).edit().putString("pin_hash",pinHash).apply();Toast.makeText(this,"הקוד עודכן",Toast.LENGTH_SHORT).show();}
+                    String p=e.getText().toString();if(p.length()>=4){pinHash=hash(p);getSharedPreferences(PREF,MODE_PRIVATE).edit().putString("pin_hash",pinHash).apply();Toast.makeText(this,"הקוד עודכן",Toast.LENGTH_SHORT).show();}
                     else Toast.makeText(this,"הקוד קצר מדי",Toast.LENGTH_SHORT).show();
                 }).setNegativeButton("ביטול",null).show();
             }else{unlocked=false;renderGate();}
