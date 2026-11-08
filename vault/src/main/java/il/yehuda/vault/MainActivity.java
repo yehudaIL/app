@@ -15,7 +15,6 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.security.MessageDigest;
 import java.util.*;
-import rikka.shizuku.Shizuku;
 
 public class MainActivity extends Activity {
     private static final String PREF="vault_secure";
@@ -26,20 +25,6 @@ public class MainActivity extends Activity {
     private boolean unlocked=false, showHidden=false;
     private String pinHash;
     private int navy=Color.rgb(9,15,34), panel=Color.rgb(20,30,57), gold=Color.rgb(225,184,105), muted=Color.rgb(157,172,198);
-
-    private final Shizuku.OnRequestPermissionResultListener permissionListener=(requestCode, grantResult)->{
-        if(requestCode==SHIZUKU_REQUEST){
-            runOnUiThread(()->{
-                if(grantResult==PackageManager.PERMISSION_GRANTED){
-                    Toast.makeText(this,"החיבור אושר. אפשר להסתיר אפליקציות",Toast.LENGTH_LONG).show();
-                    renderHome();
-                }else{
-                    new AlertDialog.Builder(this).setMessage("לא התקבל אישור Shizuku. בלי האישור אי אפשר להסתיר אייקונים בלאונצ'ר המקורי.")
-                        .setPositiveButton("הבנתי",null).show();
-                }
-            });
-        }
-    };
 
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
@@ -171,29 +156,49 @@ public class MainActivity extends Activity {
         TextView act=button(actionLabel);card.addView(act,new LinearLayout.LayoutParams(-2,50));act.setOnClickListener(v->action.run());
     }
 
+    private String runRootCommand(String command) throws Exception {
+        Process process=Runtime.getRuntime().exec(new String[]{"su","-c",command});
+        StringBuilder output=new StringBuilder();
+        BufferedReader reader=new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String line; while((line=reader.readLine())!=null) output.append(line).append("\n");
+        BufferedReader errors=new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        while((line=errors.readLine())!=null) output.append(line).append("\n");
+        int code=process.waitFor();
+        if(code!=0) throw new Exception(output.length()==0?"פקודת Root נכשלה (קוד "+code+")":output.toString());
+        return output.toString();
+    }
+    private String componentArg(String pkg,String cls){return "'"+pkg+"/"+cls+"'";}
     private void hidePackage(String pkg,List<String> classes){
-        new AlertDialog.Builder(this).setTitle("להסתיר את האפליקציה?")
-            .setMessage("האפליקציה תישאר מותקנת ופעילה. הסמל שלה יוסתר רק במשגר Stealth Vault. כדי שההסתרה תעבוד, יש להגדיר את Stealth Vault כמסך הבית.")
+        new AlertDialog.Builder(this).setTitle("הסתרה בלאונצ'ר המקורי")
+            .setMessage("האפליקציה תישאר מותקנת. נסתיר רק את רכיבי מסך הבית שלה באמצעות Root, בלי להחליף או לעצב מחדש את הלאונצ'ר. נדרשת הרשאת Root מ-Magisk.")
             .setPositiveButton("הסתר",(d,w)->{
-                Set<String> saved=hidden();
-                for(String cls:classes)saved.add(key(pkg,cls));
-                saveHidden(saved);
-                Toast.makeText(this,"האפליקציה הוסתרה מהמשגר הפרטי",Toast.LENGTH_LONG).show();
-                renderHome();
+                Set<String> saved=hidden(); List<String> changed=new ArrayList<>();
+                try{
+                    for(String cls:classes){
+                        if(saved.contains(key(pkg,cls))) continue;
+                        runRootCommand("pm disable-user --user 0 "+componentArg(pkg,cls)); changed.add(cls);
+                    }
+                    for(String cls:changed)saved.add(key(pkg,cls));
+                    saveHidden(saved);
+                    Toast.makeText(this,"האייקון הוסתר בלאונצ'ר המקורי",Toast.LENGTH_LONG).show(); renderHome();
+                }catch(Exception e){
+                    for(String cls:changed){try{runRootCommand("pm default-state --user 0 "+componentArg(pkg,cls));}catch(Exception ignored){}}
+                    new AlertDialog.Builder(this).setTitle("ההסתרה נכשלה").setMessage("לא התקבלה הרשאת Root או שהמכשיר חסם את הפעולה.\n\n"+e.getMessage()).setPositiveButton("אישור",null).show();
+                }
             }).setNegativeButton("ביטול",null).show();
     }
-
     private void restorePackage(String pkg,List<String> classes){
         new AlertDialog.Builder(this).setTitle("האפליקציה מוסתרת")
-            .setItems(new String[]{"פתח את האפליקציה","החזר אותה למגירה"},(d,w)->{
+            .setItems(new String[]{"פתח את האפליקציה","החזר את האייקון ללאונצ'ר"},(d,w)->{
                 if(w==0){
                     try{Intent launch=getPackageManager().getLaunchIntentForPackage(pkg);if(launch!=null)startActivity(launch);}
                     catch(Exception e){Toast.makeText(this,"לא ניתן לפתוח את האפליקציה",Toast.LENGTH_SHORT).show();}
                 }else{
-                    Set<String> saved=hidden();
-                    for(String cls:classes)saved.remove(key(pkg,cls));
-                    saveHidden(saved);
-                    renderHome();
+                    try{
+                        for(String cls:classes)runRootCommand("pm default-state --user 0 "+componentArg(pkg,cls));
+                        Set<String> saved=hidden(); for(String cls:classes)saved.remove(key(pkg,cls)); saveHidden(saved);
+                        Toast.makeText(this,"האייקון הוחזר ללאונצ'ר המקורי",Toast.LENGTH_SHORT).show(); renderHome();
+                    }catch(Exception e){new AlertDialog.Builder(this).setTitle("לא ניתן להחזיר").setMessage(e.getMessage()).setPositiveButton("אישור",null).show();}
                 }
             }).setNegativeButton("ביטול",null).show();
     }
