@@ -163,7 +163,7 @@ public class MainActivity extends Activity {
             if(count==0)empty("עדיין לא הסתרת אפליקציות");
         }else{
             Intent intent=new Intent(Intent.ACTION_MAIN,null);intent.addCategory(Intent.CATEGORY_LAUNCHER);
-            List<ResolveInfo> results=pm.queryIntentActivities(intent,PackageManager.MATCH_DISABLED_COMPONENTS);
+            List<ResolveInfo> results=pm.queryIntentActivities(intent,0);
             Map<String,List<String>> grouped=new TreeMap<>();
             Map<String,ResolveInfo> representative=new HashMap<>();
             for(ResolveInfo ri:results){
@@ -219,7 +219,8 @@ public class MainActivity extends Activity {
             StringBuilder command=new StringBuilder();
             for(String cls:classes){
                 String component=quote(pkg+"/"+cls);
-                command.append(enable?"pm enable ":"pm disable-user --user 0 ").append(component).append("\n");
+                command.append("if ").append(enable?"pm enable --user 0 ":"pm disable-user --user 0 ").append(component)
+                    .append("; then echo COMPONENT_OK; else echo COMPONENT_FAILED; FAILED=1; fi\\n");
             }
             command.append("echo STEALTH_VAULT_DONE\n");
             String output="";
@@ -234,7 +235,7 @@ public class MainActivity extends Activity {
             }catch(Throwable e){output="ERROR: "+e.getClass().getSimpleName()+": "+e.getMessage();}
             final String result=output;
             runOnUiThread(()->{
-                boolean ok=result.contains("STEALTH_VAULT_DONE")&&!result.startsWith("ERROR");
+                boolean ok=result.contains("STEALTH_VAULT_DONE")&&!result.contains("STEALTH_VAULT_ERROR")&&!result.startsWith("ERROR");
                 if(ok){
                     Set<String> saved=hidden();
                     for(String cls:classes){String k=key(pkg,cls);if(enable)saved.remove(k);else saved.add(k);}
