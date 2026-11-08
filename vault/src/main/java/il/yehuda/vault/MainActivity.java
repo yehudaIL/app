@@ -46,7 +46,9 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(navy);
         getWindow().setNavigationBarColor(navy);
         getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        pinHash=getSharedPreferences(PREF,MODE_PRIVATE).getString("pin_hash",null);
+        SharedPreferences prefs=getSharedPreferences(PREF,MODE_PRIVATE);
+        pinHash=prefs.getString("pin_hash",getPreferences(0).getString("pin_hash",null));
+        if(pinHash!=null)prefs.edit().putString("pin_hash",pinHash).apply();
         renderGate();
     }
 
