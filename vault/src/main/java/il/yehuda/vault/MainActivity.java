@@ -244,7 +244,15 @@ public class MainActivity extends Activity {
                     Toast.makeText(this,enable?"האפליקציה הוחזרה":"האפליקציה הוסתרה",Toast.LENGTH_LONG).show();
                     renderHome();
                 }else{
-                    new AlertDialog.Builder(this).setTitle("הפעולה לא הושלמה").setMessage("Shizuku לא הצליח לשנות את קיצורי האפליקציה. "+result).setPositiveButton("סגירה",null).show();
+                    String shown=result.length()>1800?result.substring(0,1800)+"\\n... (השגיאה המלאה תועתק בלחיצה על הכפתור) ...":result;
+                    new AlertDialog.Builder(this).setTitle("הפעולה לא הושלמה")
+                        .setMessage("Shizuku לא הצליח לשנות את קיצורי האפליקציה.\\n\\n"+shown)
+                        .setNeutralButton("העתק פרטי שגיאה",(dialog,which)->{
+                            ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                            clipboard.setPrimaryClip(ClipData.newPlainText("Stealth Vault error",result));
+                            Toast.makeText(this,"פרטי השגיאה הועתקו. עכשיו אפשר להדביק אותם בצ'אט.",Toast.LENGTH_LONG).show();
+                        })
+                        .setPositiveButton("סגירה",null).show();
                 }
             });
         }).start();
