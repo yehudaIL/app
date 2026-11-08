@@ -217,12 +217,13 @@ public class MainActivity extends Activity {
     private void runComponentCommand(String pkg,List<String> classes,boolean enable){
         new Thread(()->{
             StringBuilder command=new StringBuilder();
+            command.append("FAILED=0\\n");
             for(String cls:classes){
                 String component=quote(pkg+"/"+cls);
                 command.append("if ").append(enable?"pm enable --user 0 ":"pm disable-user --user 0 ").append(component)
                     .append("; then echo COMPONENT_OK; else echo COMPONENT_FAILED; FAILED=1; fi\\n");
             }
-            command.append("echo STEALTH_VAULT_DONE\n");
+            command.append("if [ \\$FAILED -eq 0 ]; then echo STEALTH_VAULT_DONE; else echo STEALTH_VAULT_ERROR; fi\\n");
             String output="";
             try{
                 Method method=Shizuku.class.getDeclaredMethod("newProcess",String[].class,String[].class,String.class);
@@ -231,7 +232,7 @@ public class MainActivity extends Activity {
                 OutputStream os=process.getOutputStream();os.write(command.toString().getBytes("UTF-8"));os.flush();os.close();
                 ByteArrayOutputStream buffer=new ByteArrayOutputStream();InputStream in=process.getInputStream();byte[] data=new byte[1024];int n;
                 while((n=in.read(data))!=-1)buffer.write(data,0,n);
-                int exit=process.waitFor();output=buffer.toString("UTF-8")+"\nexit="+exit;
+                int exit=process.waitFor();output=buffer.toString("UTF-8")+"\\nexit="+exit;
             }catch(Throwable e){output="ERROR: "+e.getClass().getSimpleName()+": "+e.getMessage();}
             final String result=output;
             runOnUiThread(()->{
@@ -243,7 +244,7 @@ public class MainActivity extends Activity {
                     Toast.makeText(this,enable?"האפליקציה הוחזרה":"האפליקציה הוסתרה",Toast.LENGTH_LONG).show();
                     renderHome();
                 }else{
-                    new AlertDialog.Builder(this).setTitle("הפעולה לא הושלמה").setMessage("Shizuku לא הצליח לשנות את קיצורי האפליקציה.\n"+result).setPositiveButton("סגירה",null).show();
+                    new AlertDialog.Builder(this).setTitle("הפעולה לא הושלמה").setMessage("Shizuku לא הצליח לשנות את קיצורי האפליקציה.\\n"+result).setPositiveButton("סגירה",null).show();
                 }
             });
         }).start();
