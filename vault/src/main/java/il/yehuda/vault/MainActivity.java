@@ -217,13 +217,12 @@ public class MainActivity extends Activity {
     private void runComponentCommand(String pkg,List<String> classes,boolean enable){
         new Thread(()->{
             StringBuilder command=new StringBuilder();
-            command.append("FAILED=0\\n");
             for(String cls:classes){
                 String component=quote(pkg+"/"+cls);
-                command.append("if ").append(enable?"pm enable --user 0 ":"pm disable-user --user 0 ").append(component)
-                    .append("; then echo COMPONENT_OK; else echo COMPONENT_FAILED; FAILED=1; fi\\n");
+                command.append(enable?"pm enable --user 0 ":"pm disable-user --user 0 ")
+                    .append(component).append(" || exit 1\\n");
             }
-            command.append("if [ \\$FAILED -eq 0 ]; then echo STEALTH_VAULT_DONE; else echo STEALTH_VAULT_ERROR; fi\\n");
+            command.append("echo STEALTH_VAULT_DONE\\n");
             String output="";
             try{
                 Method method=Shizuku.class.getDeclaredMethod("newProcess",String[].class,String[].class,String.class);
@@ -236,7 +235,7 @@ public class MainActivity extends Activity {
             }catch(Throwable e){output="ERROR: "+e.getClass().getSimpleName()+": "+e.getMessage();}
             final String result=output;
             runOnUiThread(()->{
-                boolean ok=result.contains("STEALTH_VAULT_DONE")&&!result.contains("STEALTH_VAULT_ERROR")&&!result.startsWith("ERROR");
+                boolean ok=result.contains("STEALTH_VAULT_DONE")&&!result.startsWith("ERROR");
                 if(ok){
                     Set<String> saved=hidden();
                     for(String cls:classes){String k=key(pkg,cls);if(enable)saved.remove(k);else saved.add(k);}
