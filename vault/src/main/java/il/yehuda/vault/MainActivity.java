@@ -221,7 +221,7 @@ public class MainActivity extends Activity {
             for(String cls:classes){
                 String component=quote(pkg+"/"+cls);
                 command.append(enable?"pm enable --user 0 ":"pm disable-user --user 0 ")
-                    .append(component).append(" || exit 1").append((char)10);
+                    .append(component).append(" 2>&1 || exit 1").append((char)10);
             }
             command.append("echo STEALTH_VAULT_DONE").append((char)10);
             String output="";
