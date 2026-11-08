@@ -93,10 +93,10 @@ public class MainActivity extends Activity {
         visible.setOnClickListener(v->{showHidden=false;renderHome();});
         hiddenBtn.setOnClickListener(v->{showHidden=true;renderHome();});
         root.addView(space(20));
-        TextView status=text("מצב הסתרה: משגר פרטי",13,gold,true);root.addView(status);
-        TextView setup=button("הגדרת Stealth Vault כמסך הבית");
+        TextView status=text("הסתרה בלאונצ'ר המקורי · נדרשת הרשאת Root",13,gold,true);root.addView(status);
+        TextView setup=button("בדיקת הרשאת Root");
         LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,54);sp.setMargins(0,12,0,10);root.addView(setup,sp);
-        setup.setOnClickListener(v->{try{startActivity(new Intent(android.provider.Settings.ACTION_HOME_SETTINGS));}catch(Exception e){startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));}});
+        setup.setOnClickListener(v->{try{String result=runRootCommand("id");new AlertDialog.Builder(this).setTitle("Root פעיל").setMessage("התקבלה הרשאת Root בהצלחה.\\n"+result).setPositiveButton("יופי",null).show();}catch(Exception e){new AlertDialog.Builder(this).setTitle("אין הרשאת Root").setMessage("כדי שההסתרה תפעל, צריך מכשיר עם Root פעיל ולאשר ל-Stealth Vault גישה ב-Magisk.\\n\\n"+e.getMessage()).setPositiveButton("הבנתי",null).show();}});
         ScrollView scroll=new ScrollView(this);scroll.setFillViewport(false);scroll.setClipToPadding(false);list=column();list.setPadding(0,14,0,14);scroll.addView(list);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         loadApps();
         TextView settings=text("הגדרות אבטחה  ·  שינוי קוד  ·  נעילה",13,muted,true);settings.setGravity(Gravity.CENTER);settings.setPadding(12,22,12,18);root.addView(settings);settings.setOnClickListener(v->securityDialog());
