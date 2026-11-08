@@ -58,10 +58,10 @@ public class MainActivity extends Activity {
 
     private GradientDrawable bg(int color,int radius){ GradientDrawable d=new GradientDrawable(); d.setColor(color); d.setCornerRadius(radius); return d; }
     private TextView text(String s,int size,int color,boolean bold){ TextView t=new TextView(this); t.setText(s); t.setTextSize(size); t.setTextColor(color); t.setGravity(Gravity.CENTER_VERTICAL); t.setTypeface(Typeface.create("sans-serif",bold?Typeface.BOLD:Typeface.NORMAL)); return t; }
-    private LinearLayout column(){ LinearLayout x=new LinearLayout(this); x.setOrientation(LinearLayout.VERTICAL); x.setPadding(22,20,22,20); return x; }
+    private LinearLayout column(){ LinearLayout x=new LinearLayout(this); x.setOrientation(LinearLayout.VERTICAL); x.setPadding(24,26,24,24); return x; }
     private LinearLayout row(){ LinearLayout x=new LinearLayout(this); x.setGravity(Gravity.CENTER_VERTICAL); x.setOrientation(LinearLayout.HORIZONTAL); return x; }
     private void base(){ root=column(); root.setBackgroundColor(navy); setContentView(root); }
-    private TextView button(String label){ TextView b=text(label,14,navy,true); b.setGravity(Gravity.CENTER); b.setPadding(15,12,15,12); b.setBackground(bg(gold,18)); return b; }
+    private TextView button(String label){ TextView b=text(label,16,navy,true); b.setGravity(Gravity.CENTER); b.setPadding(18,14,18,14); b.setMinHeight(52); b.setBackground(bg(gold,18)); return b; }
     private View space(int h){ View v=new View(this); v.setLayoutParams(new LinearLayout.LayoutParams(1,h)); return v; }
 
     private void renderGate(){
@@ -70,8 +70,8 @@ public class MainActivity extends Activity {
         TextView title=text("STEALTH VAULT",25,Color.WHITE,true); title.setGravity(Gravity.CENTER); root.addView(title);
         TextView sub=text(pinHash==null?"הגדרת כספת פרטית":"הכספת שלך נעולה",15,muted,false); sub.setGravity(Gravity.CENTER); root.addView(sub);
         root.addView(space(26));
-        pinInput=new EditText(this); pinInput.setSingleLine(true); pinInput.setGravity(Gravity.CENTER); pinInput.setTextColor(Color.WHITE); pinInput.setHintTextColor(muted); pinInput.setHint(pinHash==null?"בחר קוד בן 4 ספרות ומעלה":"הזן קוד כניסה"); pinInput.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_VARIATION_PASSWORD); pinInput.setBackground(bg(panel,18)); pinInput.setPadding(18,16,18,16); root.addView(pinInput,new LinearLayout.LayoutParams(-1,58));
-        root.addView(space(14)); TextView go=button(pinHash==null?"יצירת כספת":"כניסה מאובטחת"); root.addView(go,new LinearLayout.LayoutParams(-1,54));
+        pinInput=new EditText(this); pinInput.setSingleLine(true); pinInput.setGravity(Gravity.CENTER); pinInput.setTextColor(Color.WHITE); pinInput.setHintTextColor(muted); pinInput.setHint(pinHash==null?"בחר קוד בן 4 ספרות ומעלה":"הזן קוד כניסה"); pinInput.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_VARIATION_PASSWORD); pinInput.setBackground(bg(panel,18)); pinInput.setPadding(20,18,20,18); pinInput.setTextSize(18); root.addView(pinInput,new LinearLayout.LayoutParams(-1,64));
+        root.addView(space(14)); TextView go=button(pinHash==null?"יצירת כספת":"כניסה מאובטחת"); root.addView(go,new LinearLayout.LayoutParams(-1,60));
         go.setOnClickListener(v->{
             String p=pinInput.getText().toString();
             if(p.length()<4){pinInput.setError("הקוד חייב להכיל לפחות 4 ספרות");return;}
@@ -127,22 +127,23 @@ public class MainActivity extends Activity {
     private void renderHome(){
         base();
         TextView brand=text("◈  STEALTH VAULT",21,gold,true);root.addView(brand);
-        TextView heading=text("המרחב הפרטי שלך",25,Color.WHITE,true);root.addView(heading);
-        TextView desc=text("הלאונצ'ר המקורי נשאר כמו שהוא. הכספת מסתירה רק את קיצורי האפליקציות שבחרת.",13,muted,false);root.addView(desc);
-        root.addView(space(15));
+        root.addView(space(12));
+        TextView heading=text("המרחב הפרטי שלך",27,Color.WHITE,true);root.addView(heading);
+        TextView desc=text("הלאונצ'ר המקורי נשאר כמו שהוא. הכספת מסתירה רק את קיצורי האפליקציות שבחרת.",15,muted,false);desc.setLineSpacing(4,1f);root.addView(desc);
+        root.addView(space(22));
         LinearLayout actions=row();
-        TextView visible=button("אפליקציות מותקנות");actions.addView(visible,new LinearLayout.LayoutParams(0,48,1));
-        TextView hiddenBtn=button("מוסתרות");LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(0,48,1);hp.setMargins(9,0,0,0);actions.addView(hiddenBtn,hp);root.addView(actions);
+        TextView visible=button("אפליקציות מותקנות");actions.addView(visible,new LinearLayout.LayoutParams(0,56,1));
+        TextView hiddenBtn=button("מוסתרות");LinearLayout.LayoutParams hp=new LinearLayout.LayoutParams(0,56,1);hp.setMargins(9,0,0,0);actions.addView(hiddenBtn,hp);root.addView(actions);
         visible.setOnClickListener(v->{showHidden=false;renderHome();});
         hiddenBtn.setOnClickListener(v->{showHidden=true;renderHome();});
-        root.addView(space(12));
+        root.addView(space(20));
         TextView status=text("Shizuku: "+(hasShizukuPermission()?"מחובר ומאושר":(hasShizuku()?"ממתין לאישור":"לא פעיל")),13,hasShizukuPermission()?gold:Color.YELLOW,true);root.addView(status);
         status.setOnClickListener(v->requestShizuku());
         TextView setup=button(hasShizukuPermission()?"בדיקת חיבור Shizuku":"התחברות / אישור Shizuku");
-        LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,46);sp.setMargins(0,8,0,4);root.addView(setup,sp);setup.setOnClickListener(v->requestShizuku());
-        ScrollView scroll=new ScrollView(this);list=column();list.setPadding(0,10,0,10);scroll.addView(list);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,54);sp.setMargins(0,12,0,10);root.addView(setup,sp);setup.setOnClickListener(v->requestShizuku());
+        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(false);scroll.setClipToPadding(false);list=column();list.setPadding(0,14,0,14);scroll.addView(list);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         loadApps();
-        TextView settings=text("הגדרות אבטחה  ·  שינוי קוד  ·  נעילה",13,muted,true);settings.setGravity(Gravity.CENTER);settings.setPadding(8,18,8,12);root.addView(settings);settings.setOnClickListener(v->securityDialog());
+        TextView settings=text("הגדרות אבטחה  ·  שינוי קוד  ·  נעילה",13,muted,true);settings.setGravity(Gravity.CENTER);settings.setPadding(12,22,12,18);root.addView(settings);settings.setOnClickListener(v->securityDialog());
     }
 
     private void loadApps(){
@@ -190,13 +191,13 @@ public class MainActivity extends Activity {
     private void empty(String message){TextView e=text(message,15,muted,false);e.setGravity(Gravity.CENTER);list.addView(e,new LinearLayout.LayoutParams(-1,100));}
 
     private void addAppRow(PackageManager pm,String name,android.graphics.drawable.Drawable icon,String pkg,String subtitle,String actionLabel,Runnable action){
-        LinearLayout card=row();card.setPadding(13,9,13,9);card.setBackground(bg(panel,17));
-        LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,70);cp.setMargins(0,0,0,9);list.addView(card,cp);
-        ImageView image=new ImageView(this);image.setImageDrawable(icon);card.addView(image,new LinearLayout.LayoutParams(42,42));
-        LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);labels.setPadding(12,0,8,0);
-        labels.addView(text(name,15,Color.WHITE,true));labels.addView(text(subtitle,10,muted,false));
+        LinearLayout card=row();card.setPadding(16,12,16,12);card.setBackground(bg(panel,17));
+        LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,84);cp.setMargins(0,0,0,12);list.addView(card,cp);
+        ImageView image=new ImageView(this);image.setImageDrawable(icon);card.addView(image,new LinearLayout.LayoutParams(50,50));
+        LinearLayout labels=new LinearLayout(this);labels.setOrientation(LinearLayout.VERTICAL);labels.setPadding(14,0,10,0);
+        labels.addView(text(name,17,Color.WHITE,true));labels.addView(text(subtitle,12,muted,false));
         card.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
-        TextView act=button(actionLabel);card.addView(act,new LinearLayout.LayoutParams(-2,42));act.setOnClickListener(v->action.run());
+        TextView act=button(actionLabel);card.addView(act,new LinearLayout.LayoutParams(-2,50));act.setOnClickListener(v->action.run());
     }
 
     private void hidePackage(String pkg,List<String> classes){
